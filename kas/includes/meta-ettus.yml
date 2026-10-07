@@ -24,6 +24,6 @@ local_conf_header:
 
 repos:
   meta-ettus:
-    #url: "https://github.com/EttusResearch/meta-ettus-dev"
+    url: "https://github.com/EttusResearch/meta-ettus-dev"
     path: "layers/meta-ettus"
     branch: "scarthgap"

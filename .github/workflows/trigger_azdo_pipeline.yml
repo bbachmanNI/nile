@@ -2,6 +2,12 @@ name: Trigger AzDO PR pipeline
 
 on:
   workflow_dispatch:
+    inputs:
+      ni_central_branch:
+        description: "ni-central branch containing the pipeline YAML (without refs/heads/)"
+        required: true
+        default: users/bbachman/nile-meta-ettus-build
+        type: string
   pull_request_target:
     branches:
       - main
@@ -24,6 +30,7 @@ jobs:
       - name: Queue Azure pipeline
         env:
           AZDO_PAT: ${{ secrets.AZDO_PIPELINE_TRIGGERS }}
+          NI_CENTRAL_BRANCH: ${{ inputs.ni_central_branch || 'users/bbachman/nile-meta-ettus-build' }}
         run: |
           set -euo pipefail
           : "${AZDO_PAT:?Missing AZDO_PIPELINE_TRIGGERS secret}"
@@ -48,9 +55,10 @@ jobs:
               --argjson definition_id "$definition_id" \
               --arg build_ref "$BUILD_REF" \
               --arg repo_url "$REPO_URL" \
+              --arg ni_central_branch "$NI_CENTRAL_BRANCH" \
               '{
                 definition: {id: $definition_id},
-                sourceBranch: "refs/heads/users/jhofrich/nile-x4xx-build",
+                sourceBranch: ("refs/heads/" + $ni_central_branch),
                 parameters: ({BUILD_REF: $build_ref, REPO_URL: $repo_url} | tojson)
               }'
           )"
