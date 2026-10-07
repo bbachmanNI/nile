@@ -21,11 +21,42 @@ jobs:
         run: |
           echo "BUILD_REF=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "REPO_URL=${{ github.server_url }}/${{ github.repository }}.git" >> $GITHUB_ENV
-      - name: Trigger Main
-        uses: Azure/pipelines@v1.2
-        with:
-          azure-devops-project-url: "https://dev.azure.com/ni/DevCentral"
-          azure-pipeline-name: "ni-central-rtos-nile-github"
-          azure-devops-token: ${{ secrets.AZDO_PIPELINE_TRIGGERS }}
-          azure-pipeline-variables: >
-            {"BUILD_REF":"${{ env.BUILD_REF }}","REPO_URL":"${{ env.REPO_URL }}"}
+      - name: Queue Azure pipeline
+        env:
+          AZDO_PAT: ${{ secrets.AZDO_PIPELINE_TRIGGERS }}
+        run: |
+          set -euo pipefail
+          : "${AZDO_PAT:?Missing AZDO_PIPELINE_TRIGGERS secret}"
+
+          project_url="https://dev.azure.com/ni/DevCentral"
+          pipeline_name="ni-central-rtos-nile-github"
+
+          definition_id="$(
+            curl --fail --silent --show-error \
+              --user ":${AZDO_PAT}" \
+              "${project_url}/_apis/build/definitions?name=${pipeline_name}&api-version=7.1" |
+            jq -er --arg name "$pipeline_name" '
+              [.value[] | select(.name == $name) | .id]
+              | if length == 1 then .[0]
+                else error("Expected exactly one matching pipeline")
+                end
+            '
+          )"
+
+          request_body="$(
+            jq -n \
+              --argjson definition_id "$definition_id" \
+              --arg build_ref "$BUILD_REF" \
+              --arg repo_url "$REPO_URL" \
+              '{
+                definition: {id: $definition_id},
+                sourceBranch: "refs/heads/users/jhofrich/nile-x4xx-build",
+                parameters: ({BUILD_REF: $build_ref, REPO_URL: $repo_url} | tojson)
+              }'
+          )"
+
+          curl --fail --silent --show-error \
+            --user ":${AZDO_PAT}" \
+            --header "Content-Type: application/json" \
+            --data "$request_body" \
+            "${project_url}/_apis/build/builds?api-version=7.1"
