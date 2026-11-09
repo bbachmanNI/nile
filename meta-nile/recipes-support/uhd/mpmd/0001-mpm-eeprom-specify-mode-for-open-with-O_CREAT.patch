@@ -1,0 +1,51 @@
+From 31c94355d107d574ed927ed9689bda66ffdaa10d Mon Sep 17 00:00:00 2001
+From: kas User <kas@example.com>
+Date: Wed, 2 Sep 2026 13:55:45 +0200
+Subject: [PATCH] mpm: eeprom: specify mode for open() with O_CREAT
+
+A sufficiently-new-enough gcc finds this error in open() usage:
+
+> error: call to '__open_missing_mode' declared with attribute error:
+> open with O_CREAT or O_TMPFILE in second argument needs 3 arguments
+
+Specify a mode of 0666 for the three open()s in eeprom.c that need it.
+
+Signed-off-by: Brenda Streiff <brenda.streiff@emerson.com>
+---
+ mpm/tools/eeprom.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/mpm/tools/eeprom.c b/mpm/tools/eeprom.c
+index 85c536f5e..9fcfa2c4d 100644
+--- a/mpm/tools/eeprom.c
++++ b/mpm/tools/eeprom.c
+@@ -293,7 +293,7 @@ void usrp_sulfur_eeprom_to_file(struct usrp_sulfur_eeprom* ep, const char* path)
+     size_t len = sizeof(*ep);
+     size_t got = 0;
+ 
+-    fd = open(path, O_WRONLY | O_CREAT);
++    fd = open(path, O_WRONLY | O_CREAT, 0666);
+     if (fd < 0) {
+         perror("Could not open file:\n");
+         return;
+@@ -318,7 +318,7 @@ void usrp_sulfur_db_eeprom_to_file(struct usrp_sulfur_db_eeprom* ep, const char*
+     size_t len = sizeof(*ep);
+     size_t got = 0;
+ 
+-    fd = open(path, O_WRONLY | O_CREAT);
++    fd = open(path, O_WRONLY | O_CREAT, 0666);
+     if (fd < 0) {
+         perror("Could not open file:\n");
+         return;
+@@ -411,7 +411,7 @@ void usrp_sulfur_eeprom_to_i2c(struct usrp_sulfur_eeprom* ep, const char* path)
+     size_t len = sizeof(*ep);
+     size_t i;
+ 
+-    fd = open(path, O_WRONLY | O_CREAT);
++    fd = open(path, O_WRONLY | O_CREAT, 0666);
+     if (fd < 0) {
+         perror("Could not open file:\n");
+         return;
+-- 
+2.39.5
+
