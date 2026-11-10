@@ -8,6 +8,8 @@ overrides:
       commit: 6b7eef28e7277e43bc01d8e0f1a0445923fb74a3
     meta-arm:
       commit: 0a4b911d9fd63ab29c4532a907fae3282dbdcfe4
+    meta-ettus:
+      commit: HEAD
     meta-mender:
       commit: 1fa4f2c3c9f1f9023e8a384083476b60de3a8d0c
     meta-openamp:
